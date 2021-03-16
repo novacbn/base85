@@ -1,18 +1,16 @@
 {
-  "camelcase" : true,
-  "curly" : true,
-  "eqeqeq" : true,
-  "freeze" : true,
-  "immed" : true,
-  "indent" : 2,
-  "newcap" : true,
-  "nonew" : true,
-  "quotmark" : "single",
-  "undef" : true,
-  "unused" : true,
-  "strict" : true,
-  "trailing" : true,
-  "maxlen" : 120,
+  "camelcase": true,
+  "eqeqeq": true,
+  "freeze": true,
+  "immed": true,
+  "nonew": true,
+  "undef": true,
+  "unused": true,
+  "strict": true,
+  "trailing": true,
+  "maxlen": 120,
 
-  "node" : true
+  "globals": { "TextEncoder": false, "TextDecoder": false },
+  "node": true,
+  "esversion": 6
 }

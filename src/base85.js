@@ -1,15 +1,112 @@
 "use strict";
+const CHAR_MAP = [
+    "!",
+    '"',
+    "#",
+    "$",
+    "%",
+    "&",
+    "'",
+    "(",
+    ")",
+    "*",
+    "+",
+    ",",
+    "-",
+    ".",
+    "/",
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    ":",
+    ";",
+    "<",
+    "=",
+    ">",
+    "?",
+    "@",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H",
+    "I",
+    "J",
+    "K",
+    "L",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "[",
+    "\\",
+    "]",
+    "^",
+    "_",
+    "`",
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "m",
+    "n",
+    "o",
+    "p",
+    "q",
+    "r",
+    "s",
+    "t",
+    "u",
+];
 
-var alphabets = require("./alphabets");
+const DECODE_MAP = Object.fromEntries(
+    CHAR_MAP.map((char, index) => {
+        return [char.charCodeAt(0), index];
+    })
+);
 
-var NUM_MAXVALUE = Math.pow(2, 32) - 1;
-var QUAD85 = 85 * 85 * 85 * 85;
-var TRIO85 = 85 * 85 * 85;
-var DUO85 = 85 * 85;
-var SING85 = 85;
+const ENCODE_MAP = Object.fromEntries(
+    CHAR_MAP.map((char, index) => {
+        return [index, char];
+    })
+);
+
+const NUM_MAXVALUE = Math.pow(2, 32) - 1;
+const QUAD85 = 85 * 85 * 85 * 85;
+const TRIO85 = 85 * 85 * 85;
+const DUO85 = 85 * 85;
+const SING85 = 85;
 
 /* Characters to allow (and ignore) in an encoded buffer */
-var IGNORE_CHARS = [
+const IGNORE_CHARS = [
     0x09 /* horizontal tab */,
     0x0a /* line feed, new line */,
     0x0b /* vertical tab */,
@@ -18,8 +115,8 @@ var IGNORE_CHARS = [
     0x20 /* space */,
 ];
 
-var ASCII85_ENC_START = "<~";
-var ASCII85_ENC_END = "~>";
+const ASCII85_ENC_START = "<~";
+const ASCII85_ENC_END = "~>";
 
 const ENCODINGS = {
     bytes: "ByteArray",
@@ -39,7 +136,6 @@ function fromBuffer(buffer) {
 }
 
 function encodeBuffer(buffer) {
-    var enctable = alphabets.enc;
     var padding = buffer.length % 4 === 0 ? 0 : 4 - (buffer.length % 4);
 
     var result = "";
@@ -54,7 +150,7 @@ function encodeBuffer(buffer) {
         /* Create 5 characters from '!' to 'u' alphabet */
         var block = [];
         for (var j = 0; j < 5; ++j) {
-            block.unshift(enctable[num % 85]);
+            block.unshift(ENCODE_MAP[num % 85]);
             num = Math.floor(num / 85);
         }
 
@@ -70,8 +166,6 @@ function encodeBuffer(buffer) {
 }
 
 function decodeBuffer(buffer) {
-    var dectable = alphabets.dec;
-
     var dataLength = buffer.length;
     dataLength -= ASCII85_ENC_START.length + ASCII85_ENC_END.length;
 
@@ -97,19 +191,19 @@ function decodeBuffer(buffer) {
         var num = 0;
 
         i = nextValidByte(i);
-        num = dectable[buffer[i]] * QUAD85;
+        num = DECODE_MAP[buffer[i]] * QUAD85;
 
         i = nextValidByte(i + 1);
-        num += (i >= bufferEnd ? 84 : dectable[buffer[i]]) * TRIO85;
+        num += (i >= bufferEnd ? 84 : DECODE_MAP[buffer[i]]) * TRIO85;
 
         i = nextValidByte(i + 1);
-        num += (i >= bufferEnd ? 84 : dectable[buffer[i]]) * DUO85;
+        num += (i >= bufferEnd ? 84 : DECODE_MAP[buffer[i]]) * DUO85;
 
         i = nextValidByte(i + 1);
-        num += (i >= bufferEnd ? 84 : dectable[buffer[i]]) * SING85;
+        num += (i >= bufferEnd ? 84 : DECODE_MAP[buffer[i]]) * SING85;
 
         i = nextValidByte(i + 1);
-        num += i >= bufferEnd ? 84 : dectable[buffer[i]];
+        num += i >= bufferEnd ? 84 : DECODE_MAP[buffer[i]];
 
         i = nextValidByte(i + 1);
 
@@ -131,18 +225,16 @@ function decodeBuffer(buffer) {
     return result.slice(0, writeIndex - padding);
 }
 
-module.exports = {
-    encode: function (data, encoding = ENCODINGS.string) {
-        if (typeof data === "string") data = toBuffer(data);
+export function encode(data, encoding = ENCODINGS.string) {
+    if (typeof data === "string") data = toBuffer(data);
 
-        if (encoding === ENCODINGS.bytes) return toBuffer(encodeBuffer(data));
-        return encodeBuffer(data);
-    },
+    if (encoding === ENCODINGS.bytes) return toBuffer(encodeBuffer(data));
+    return encodeBuffer(data);
+}
 
-    decode: function (data, encoding = ENCODINGS.bytes) {
-        if (typeof data === "string") data = toBuffer(data.replace("z", "!!!!!"));
+export function decode(data, encoding = ENCODINGS.bytes) {
+    if (typeof data === "string") data = toBuffer(data.replace("z", "!!!!!"));
 
-        if (encoding === ENCODINGS.string) return fromBuffer(decodeBuffer(data));
-        return decodeBuffer(data);
-    },
-};
+    if (encoding === ENCODINGS.string) return fromBuffer(decodeBuffer(data));
+    return decodeBuffer(data);
+}
